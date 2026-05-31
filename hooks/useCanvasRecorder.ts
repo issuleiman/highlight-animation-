@@ -31,18 +31,18 @@ export const useCanvasRecorder = () => {
 
       ctx.scale(resolutionMultiplier, resolutionMultiplier);
 
-      // Determine supported MIME type
+      // Export MP4 only. Avoid falling back to WebM because the UI promises an MP4 file.
       const types = [
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=h264',
-        'video/webm',
-        'video/mp4' // Safari support
+        'video/mp4;codecs="avc1.42E01E, mp4a.40.2"',
+        'video/mp4;codecs="avc1.42E01E"',
+        'video/mp4;codecs=h264',
+        'video/mp4'
       ];
       const mimeType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
 
       if (!mimeType) {
         setIsRecording(false);
-        reject(new Error("Video recording is not supported in this browser."));
+        reject(new Error("MP4 export is not supported in this browser. Try Safari or a browser with MP4 MediaRecorder support."));
         return;
       }
 
@@ -78,13 +78,12 @@ export const useCanvasRecorder = () => {
 
       recorder.onstop = () => {
         const type = mimeType.split(';')[0];
-        const ext = type.includes('mp4') ? 'mp4' : 'webm';
         const blob = new Blob(chunks, { type });
         const url = URL.createObjectURL(blob);
         
         const a = document.createElement('a');
         a.href = url;
-        a.download = `highlight-video.${ext}`;
+        a.download = 'highlight-video.mp4';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
